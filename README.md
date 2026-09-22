@@ -25,6 +25,15 @@ as an audit trail employees can trust:
 - The killer feature is auditability, not monitoring: **"Why does this
   timesheet say 4.2 hours?"** → click it → see the underlying evidence.
 
+## Security
+
+Because this handles a company's employee activity data, the activity log
+is encrypted at rest via the OS keychain and tamper-evident via a hash
+chain — so a timesheet can't be quietly hand-edited by anyone, including
+the employee whose machine it's on. The app is also hardened as an
+Electron app (sandboxed renderer, strict CSP, validated IPC, no arbitrary
+navigation). Full threat model and details: [SECURITY.md](./SECURITY.md).
+
 ## How it works
 
 1. **Start work** — TimeProof runs quietly in the background (tray icon).
@@ -61,7 +70,7 @@ src/
                           drill-down ("why N hours?"), and approve/submit
   privacy.js              Default privacy policy, redaction, "what's collected"
   activityTracker.js      Polls active window + idle time on an interval
-  store.js                Append-only local JSONL activity log (no native deps)
+  store.js                Encrypted, tamper-evident append-only activity log (no native deps)
   main.js / preload.js    Electron shell: tray, power events, IPC to the UI
 renderer/
   index.html / dashboard.js / styles.css   Review UI: timesheet, evidence drill-down, privacy panel

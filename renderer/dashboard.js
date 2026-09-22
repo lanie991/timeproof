@@ -1,5 +1,18 @@
 'use strict';
 
+async function renderIntegrity() {
+  const result = await window.timeproof.verifyIntegrity();
+  const el = document.getElementById('integrity-status');
+  if (result.valid) {
+    const lock = result.encryptedAtRest ? 'encrypted' : 'unencrypted (OS keychain unavailable)';
+    el.textContent = `✅ Log integrity verified — ${result.count} record(s), ${lock}`;
+    el.className = 'integrity ok';
+  } else {
+    el.textContent = `⚠️ Integrity check failed at entry ${result.brokenAtIndex}: ${result.reason}`;
+    el.className = 'integrity bad';
+  }
+}
+
 async function renderTimesheet() {
   const timesheet = await window.timeproof.getTimesheet();
   document.getElementById('total-hours').textContent = `Total: ${timesheet.totalHours}h`;
@@ -80,3 +93,4 @@ document.getElementById('screenshots-toggle').addEventListener('change', async (
 
 renderTimesheet();
 renderPrivacy();
+renderIntegrity();

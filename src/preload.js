@@ -8,4 +8,5 @@ contextBridge.exposeInMainWorld('timeproof', {
   approve: (projectName) => ipcRenderer.invoke('timeproof:approve', projectName),
   getPrivacy: () => ipcRenderer.invoke('timeproof:get-privacy'),
   setScreenshots: (enabled) => ipcRenderer.invoke('timeproof:set-screenshots', enabled),
+  verifyIntegrity: () => ipcRenderer.invoke('timeproof:verify-integrity'),
 });

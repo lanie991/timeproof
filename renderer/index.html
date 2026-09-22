@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none';" />
 <title>TimeProof</title>
 <link rel="stylesheet" href="styles.css" />
 </head>
@@ -17,6 +18,7 @@
         <h2>Today's Timesheet</h2>
         <span id="total-hours"></span>
       </div>
+      <p id="integrity-status" class="integrity"></p>
       <table id="timesheet-table">
         <thead>
           <tr><th>Project</th><th>Hours</th><th>Status</th><th></th></tr>
