@@ -97,7 +97,8 @@ button + button { margin-left: 6px; }
 #project-list .remove-project-btn { margin-left: auto; background: #dc2626; }
 
 #project-form { display: flex; gap: 8px; flex-wrap: wrap; }
-#project-form input {
+#project-form input,
+#integration-form input {
   flex: 1;
   min-width: 160px;
   padding: 7px 10px;
@@ -105,3 +106,9 @@ button + button { margin-left: 6px; }
   border-radius: 6px;
   font-size: 13px;
 }
+
+.task-subtitle { color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+#integration-form { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.hint.ok { color: #16a34a; }
+.hint.bad { color: #dc2626; font-weight: 600; }

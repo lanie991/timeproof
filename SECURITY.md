@@ -68,6 +68,23 @@ on the machine it runs on.
   small, pinned dependency tree by design — keep it that way rather than
   adding packages for convenience.
 
+## Internal system integration
+
+The API key for the company's internal system (see README →
+"Internal system integration") is encrypted at rest the same way the
+activity log is, via `src/integrationConfig.js`. Only **approved**
+timesheet lines are ever sent — `src/integration.js` filters unapproved
+lines before building the request, so nothing pending or unreviewed
+leaves the machine. The renderer never receives the API key back from
+the main process (only a `hasApiKey` boolean) — it can set a new key but
+can't read the stored one back out.
+
+This assumes the internal endpoint is trustworthy — TimeProof sends
+whatever endpoint URL is configured, over whatever scheme it's given
+(`http://` is accepted for genuinely internal/intranet endpoints, but
+`https://` should be preferred whenever the traffic could leave a
+trusted network, since the API key travels in the request headers).
+
 ## Not yet implemented (roadmap)
 
 - Code signing and a signed auto-update channel — required before

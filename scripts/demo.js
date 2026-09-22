@@ -44,7 +44,8 @@ const timesheet = buildTimesheet(blocks, { weekLabel: 'Demo Day' });
 
 console.log(`\nTimesheet — ${timesheet.weekLabel} (total ${timesheet.totalHours}h)\n`);
 for (const line of timesheet.lines) {
-  console.log(`${line.project.padEnd(14)} ${line.duration.padStart(8)}  [${line.status}]`);
+  const tasks = line.tasks.length ? ` (${line.tasks.join(', ')})` : '';
+  console.log(`${(line.project + tasks).padEnd(40)} ${line.duration.padStart(8)}  [${line.status}]`);
 }
 
 console.log('\n--- Drill-down: "Why does this say N hours?" ---\n');
@@ -52,7 +53,8 @@ for (const line of timesheet.lines) {
   const explanation = explainProject(timesheet, line.project);
   console.log(`${explanation.project} — ${explanation.hours}h`);
   for (const block of explanation.blocks) {
-    console.log(`  ${block.range}  ${block.duration}  Confidence: ${block.confidence}%`);
+    const task = block.taskLabel ? ` — ${block.taskLabel}` : '';
+    console.log(`  ${block.range}${task}  ${block.duration}  Confidence: ${block.confidence}%`);
     for (const e of block.evidence) console.log(`    - ${e}`);
   }
   console.log('');

@@ -114,10 +114,51 @@ dependency — if it's not installed or fails to load (e.g. in CI, or an
 unsupported platform), the tracker degrades to an "Unknown" window sample
 rather than crashing.
 
+## Internal system integration
+
+The "Company System" panel in the app lets you point TimeProof at your
+company's own internal timesheet API — no specific vendor is assumed.
+Configure an endpoint URL, an optional employee ID, and an optional API
+key (encrypted at rest the same way the activity log is). Clicking
+**Submit to Company System** POSTs only **approved** lines as JSON:
+
+```json
+{
+  "employeeId": "jane@company.com",
+  "weekLabel": "2026-09-22",
+  "submittedAt": "2026-09-22T15:54:24.237Z",
+  "lines": [
+    {
+      "project": "Client ABC",
+      "hours": 2.5,
+      "tasks": ["Bank Statement Analysis"],
+      "evidence": [
+        {
+          "range": "09:03–11:41",
+          "duration": "2h 38m",
+          "confidence": 98,
+          "evidence": [
+            "Excel active: 09:03–10:12",
+            "Outlook active: 10:14–10:27",
+            "Word active: 10:29–11:41",
+            "No idle period >5 minutes"
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+If an API key is set, it's sent as `Authorization: Bearer <key>`. Your
+internal API needs to accept a POST with this shape and return a 2xx
+status; anything else (including a network failure) is surfaced back to
+the user as a plain-language error rather than failing silently. See
+`src/integration.js` if the receiving system needs a different shape —
+it's a single small function, safe to adapt.
+
 ## Roadmap
 
-- [ ] Project/client keyword rules configurable from the UI (currently
-      set in `main.js`'s `projectRules`)
 - [ ] Calendar integration as an additional confidence signal
 - [ ] Optional blurred screenshots (capture + client-side pixelation)
 - [ ] Manager dashboard: weekly rollup across a team, export/integrations

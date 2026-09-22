@@ -187,6 +187,29 @@ function scoreBlock(block, options) {
   return { score, evidence };
 }
 
+const FILE_EXTENSION_RE = /\.(xlsx|xlsm|xls|docx|doc|pdf|csv|pptx|ppt|txt)$/i;
+
+function cleanTitle(title) {
+  if (!title) return '';
+  return title.replace(FILE_EXTENSION_RE, '').trim();
+}
+
+/**
+ * A short human label for "what" the block was — e.g. "Bank Statement
+ * Analysis" — derived from the document/window title of the block's
+ * longest-running segment (the most representative activity), rather
+ * than just the project it was classified under.
+ */
+function deriveTaskLabel(block) {
+  const longest = block.segments.reduce((best, seg) => {
+    const durationMs = seg.end - seg.start;
+    return !best || durationMs > best.durationMs ? { ...seg, durationMs } : best;
+  }, null);
+
+  const cleaned = cleanTitle(longest && longest.title);
+  return cleaned || (longest && longest.app) || null;
+}
+
 function formatRange(startMs, endMs) {
   return `${formatTime(startMs)}–${formatTime(endMs)}`;
 }
@@ -221,6 +244,7 @@ function buildEvidenceBlocks(samples, userOptions = {}) {
     const durationMs = block.end - block.start;
     return {
       project: block.project,
+      taskLabel: deriveTaskLabel(block),
       start: block.start,
       end: block.end,
       durationMs,

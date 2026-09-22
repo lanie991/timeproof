@@ -9,6 +9,8 @@ const { buildEvidenceBlocks } = require('./timeEvidenceEngine');
 const { buildTimesheet, explainProject, approveLine } = require('./timesheetBuilder');
 const { DEFAULT_SETTINGS, describeCollection } = require('./privacy');
 const { loadProjectRules, saveProjectRules } = require('./projectRules');
+const { loadIntegrationConfig, saveIntegrationConfig } = require('./integrationConfig');
+const { submitTimesheet } = require('./integration');
 
 // Two processes appending to the same activity log would race on the hash
 // chain and corrupt it, so only one instance of the app may run at a time.
@@ -20,9 +22,11 @@ if (!gotSingleInstanceLock) {
 const DATA_DIR = path.join(app.getPath('userData'), 'activity');
 const store = new ActivityStore(DATA_DIR, { safeStorage });
 const PROJECT_RULES_FILE = path.join(app.getPath('userData'), 'project-rules.json');
+const INTEGRATION_CONFIG_FILE = path.join(app.getPath('userData'), 'integration-config.json');
 
 let settings = { ...DEFAULT_SETTINGS };
 let projectRules = loadProjectRules(PROJECT_RULES_FILE);
+let integrationConfig = loadIntegrationConfig(INTEGRATION_CONFIG_FILE, { safeStorage });
 
 let mainWindow = null;
 let tray = null;
@@ -167,6 +171,32 @@ app.whenReady().then(() => {
     saveProjectRules(PROJECT_RULES_FILE, projectRules);
     return projectRules;
   });
+
+  ipcMain.handle('timeproof:get-integration-config', () => ({
+    endpointUrl: integrationConfig.endpointUrl,
+    employeeId: integrationConfig.employeeId,
+    hasApiKey: !!integrationConfig.apiKey,
+  }));
+
+  ipcMain.handle('timeproof:set-integration-config', (_evt, input) => {
+    const endpointUrl =
+      input && typeof input.endpointUrl === 'string' ? input.endpointUrl.trim() : integrationConfig.endpointUrl;
+    const employeeId =
+      input && typeof input.employeeId === 'string' ? input.employeeId.trim() : integrationConfig.employeeId;
+    // A blank apiKey field means "leave the stored key as-is," not "clear it."
+    const apiKey =
+      input && typeof input.apiKey === 'string' && input.apiKey ? input.apiKey : integrationConfig.apiKey;
+
+    if (endpointUrl && !/^https?:\/\//i.test(endpointUrl)) {
+      return { error: 'Endpoint must start with http:// or https://' };
+    }
+
+    integrationConfig = { endpointUrl, employeeId, apiKey };
+    saveIntegrationConfig(INTEGRATION_CONFIG_FILE, integrationConfig, { safeStorage });
+    return { endpointUrl, employeeId, hasApiKey: !!apiKey };
+  });
+
+  ipcMain.handle('timeproof:submit-timesheet', () => submitTimesheet(integrationConfig, currentTimesheet()));
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

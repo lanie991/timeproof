@@ -18,6 +18,7 @@
         <h2>Today's Timesheet</h2>
         <span>
           <span id="total-hours"></span>
+          <button id="submit-btn">Submit to Company System</button>
           <button id="refresh-btn">Refresh</button>
         </span>
       </div>
@@ -28,6 +29,7 @@
         </thead>
         <tbody id="timesheet-body"></tbody>
       </table>
+      <p id="submit-result" class="hint"></p>
     </section>
 
     <section id="evidence" class="hidden">
@@ -52,6 +54,23 @@
         <input type="text" id="project-keywords" placeholder="Keywords, comma separated (e.g. client abc, abc-corp)" required />
         <button type="submit">Add</button>
       </form>
+    </section>
+
+    <section id="integration">
+      <h2>Company System</h2>
+      <p class="hint">
+        Ask your IT/admin team for your internal timesheet system's API
+        endpoint and an API key (see the "Internal system integration"
+        section of the README for the exact data TimeProof sends). Only
+        approved lines are ever submitted.
+      </p>
+      <form id="integration-form">
+        <input type="text" id="integration-endpoint" placeholder="https://your-company-system.example.com/api/timesheets" />
+        <input type="text" id="integration-employee" placeholder="Your employee ID or email (optional)" />
+        <input type="password" id="integration-apikey" placeholder="API key (leave blank to keep current)" />
+        <button type="submit">Save</button>
+      </form>
+      <p id="integration-status" class="hint"></p>
     </section>
 
     <section id="privacy">

@@ -25,6 +25,7 @@ function buildTimesheet(blocks, { weekLabel } = {}) {
       hours: Math.round((entry.totalMs / 3600000) * 100) / 100,
       duration: formatDuration(entry.totalMs),
       status: entry.status,
+      tasks: [...new Set(entry.blocks.map((b) => b.taskLabel).filter(Boolean))],
       blocks: entry.blocks,
     }))
     .sort((a, b) => b.hours - a.hours);
@@ -51,6 +52,7 @@ function explainProject(timesheet, projectName) {
     blocks: line.blocks.map((b) => ({
       range: `${new Date(b.start).toTimeString().slice(0, 5)}–${new Date(b.end).toTimeString().slice(0, 5)}`,
       duration: b.duration,
+      taskLabel: b.taskLabel,
       confidence: b.confidence,
       evidence: b.evidence,
     })),

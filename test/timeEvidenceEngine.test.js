@@ -110,6 +110,25 @@ describe('buildEvidenceBlocks', () => {
   });
 });
 
+describe('taskLabel', () => {
+  it('derives a task label from the longest-running segment, stripping the file extension', () => {
+    const samples = [
+      sample(0, 'Outlook', 'RE: Client ABC correspondence'),
+      sample(1, 'Excel', 'Bank Statement Analysis.xlsx'),
+      sample(2, 'Excel', 'Bank Statement Analysis.xlsx'),
+      sample(3, 'Excel', 'Bank Statement Analysis.xlsx'),
+    ];
+    const [block] = buildEvidenceBlocks(samples, { projectRules });
+    expect(block.taskLabel).toBe('Bank Statement Analysis');
+  });
+
+  it('falls back to the app name when there is no useful title', () => {
+    const samples = [sample(0, 'Terminal', '')];
+    const [block] = buildEvidenceBlocks(samples, { projectRules: [] });
+    expect(block.taskLabel).toBe('Terminal');
+  });
+});
+
 describe('formatDuration', () => {
   it('formats minutes, hours, and combined', () => {
     expect(formatDuration(45 * MIN)).toBe('45m');
