@@ -8,6 +8,7 @@ const { ActivityTracker } = require('./activityTracker');
 const { buildEvidenceBlocks } = require('./timeEvidenceEngine');
 const { buildTimesheet, explainProject, approveLine } = require('./timesheetBuilder');
 const { DEFAULT_SETTINGS, describeCollection } = require('./privacy');
+const { loadProjectRules, saveProjectRules } = require('./projectRules');
 
 // Two processes appending to the same activity log would race on the hash
 // chain and corrupt it, so only one instance of the app may run at a time.
@@ -18,11 +19,10 @@ if (!gotSingleInstanceLock) {
 
 const DATA_DIR = path.join(app.getPath('userData'), 'activity');
 const store = new ActivityStore(DATA_DIR, { safeStorage });
+const PROJECT_RULES_FILE = path.join(app.getPath('userData'), 'project-rules.json');
 
 let settings = { ...DEFAULT_SETTINGS };
-let projectRules = [
-  // Example: { name: 'Client ABC', keywords: ['client abc', 'abc-corp'] }
-];
+let projectRules = loadProjectRules(PROJECT_RULES_FILE);
 
 let mainWindow = null;
 let tray = null;
@@ -146,6 +146,27 @@ app.whenReady().then(() => {
     encryptedAtRest: safeStorage.isEncryptionAvailable(),
     ...store.verifyDay(todayStr()),
   }));
+
+  ipcMain.handle('timeproof:get-projects', () => projectRules);
+
+  ipcMain.handle('timeproof:add-project', (_evt, input) => {
+    const name = input && typeof input.name === 'string' ? input.name.trim() : '';
+    const keywords = Array.isArray(input && input.keywords)
+      ? input.keywords.filter((k) => typeof k === 'string' && k.trim()).map((k) => k.trim())
+      : [];
+    if (!name || keywords.length === 0) return projectRules;
+
+    projectRules = [...projectRules.filter((r) => r.name !== name), { name, keywords }];
+    saveProjectRules(PROJECT_RULES_FILE, projectRules);
+    return projectRules;
+  });
+
+  ipcMain.handle('timeproof:remove-project', (_evt, name) => {
+    if (typeof name !== 'string') return projectRules;
+    projectRules = projectRules.filter((r) => r.name !== name);
+    saveProjectRules(PROJECT_RULES_FILE, projectRules);
+    return projectRules;
+  });
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

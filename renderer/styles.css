@@ -82,3 +82,26 @@ button + button { margin-left: 6px; }
 .integrity.ok { color: #16a34a; }
 .integrity.bad { color: #dc2626; font-weight: 600; }
 #privacy-collects, #privacy-never { color: var(--muted); font-size: 13px; }
+
+.hint { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
+#project-list { list-style: none; padding: 0; margin: 0 0 14px; }
+#project-list > li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+#project-list > li:last-child { border-bottom: none; }
+#project-list .remove-project-btn { margin-left: auto; background: #dc2626; }
+
+#project-form { display: flex; gap: 8px; flex-wrap: wrap; }
+#project-form input {
+  flex: 1;
+  min-width: 160px;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+}

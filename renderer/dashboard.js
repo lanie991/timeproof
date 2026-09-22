@@ -1,5 +1,17 @@
 'use strict';
 
+// Window/app titles come from other applications, so they're not trusted
+// input — escape before inserting into innerHTML rather than relying on
+// the page's CSP alone to contain them.
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 async function renderIntegrity() {
   const result = await window.timeproof.verifyIntegrity();
   const el = document.getElementById('integrity-status');
@@ -22,15 +34,16 @@ async function renderTimesheet() {
 
   for (const line of timesheet.lines) {
     const tr = document.createElement('tr');
+    const project = escapeHtml(line.project);
 
     const statusIcon = line.status === 'approved' ? '✅' : '⏳';
     tr.innerHTML = `
-      <td>${line.project}</td>
+      <td>${project}</td>
       <td>${line.hours}</td>
-      <td>${statusIcon} ${line.status}</td>
+      <td>${statusIcon} ${escapeHtml(line.status)}</td>
       <td>
-        <button class="explain-btn" data-project="${line.project}">Why?</button>
-        <button class="approve-btn" data-project="${line.project}" ${line.status === 'approved' ? 'disabled' : ''}>Approve</button>
+        <button class="explain-btn" data-project="${project}">Why?</button>
+        <button class="approve-btn" data-project="${project}" ${line.status === 'approved' ? 'disabled' : ''}>Approve</button>
       </td>
     `;
     body.appendChild(tr);
@@ -59,9 +72,9 @@ async function showEvidence(projectName) {
   for (const block of explanation.blocks) {
     const li = document.createElement('li');
     li.innerHTML = `
-      <strong>${block.range}</strong> — ${block.duration}
+      <strong>${escapeHtml(block.range)}</strong> — ${escapeHtml(block.duration)}
       <span class="confidence">Confidence: ${block.confidence}%</span>
-      <ul>${block.evidence.map((e) => `<li>${e}</li>`).join('')}</ul>
+      <ul>${block.evidence.map((e) => `<li>${escapeHtml(e)}</li>`).join('')}</ul>
     `;
     list.appendChild(li);
   }
@@ -69,13 +82,41 @@ async function showEvidence(projectName) {
   document.getElementById('evidence').classList.remove('hidden');
 }
 
+async function renderProjects() {
+  const rules = await window.timeproof.getProjects();
+  const list = document.getElementById('project-list');
+
+  if (rules.length === 0) {
+    list.innerHTML = '<li class="hint">No projects yet — activity will show as "Unclassified".</li>';
+    return;
+  }
+
+  list.innerHTML = rules
+    .map(
+      (r) => `
+        <li>
+          <strong>${escapeHtml(r.name)}</strong> — ${escapeHtml(r.keywords.join(', '))}
+          <button class="remove-project-btn" data-name="${escapeHtml(r.name)}">Remove</button>
+        </li>
+      `
+    )
+    .join('');
+
+  list.querySelectorAll('.remove-project-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      await window.timeproof.removeProject(btn.dataset.name);
+      renderProjects();
+    });
+  });
+}
+
 async function renderPrivacy() {
   const privacy = await window.timeproof.getPrivacy();
   document.getElementById('privacy-collects').innerHTML = privacy.collects
-    .map((c) => `<li>${c}</li>`)
+    .map((c) => `<li>${escapeHtml(c)}</li>`)
     .join('');
   document.getElementById('privacy-never').innerHTML = privacy.neverCollects
-    .map((c) => `<li>${c}</li>`)
+    .map((c) => `<li>${escapeHtml(c)}</li>`)
     .join('');
   document.getElementById('screenshots-toggle').checked = privacy.collects.some((c) =>
     c.startsWith('Screenshots every')
@@ -91,6 +132,24 @@ document.getElementById('screenshots-toggle').addEventListener('change', async (
   renderPrivacy();
 });
 
+document.getElementById('project-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const nameInput = document.getElementById('project-name');
+  const keywordsInput = document.getElementById('project-keywords');
+
+  const name = nameInput.value.trim();
+  const keywords = keywordsInput.value
+    .split(',')
+    .map((k) => k.trim())
+    .filter(Boolean);
+
+  if (!name || keywords.length === 0) return;
+
+  await window.timeproof.addProject({ name, keywords });
+  e.target.reset();
+  renderProjects();
+});
+
 function refreshAll() {
   renderTimesheet();
   renderPrivacy();
@@ -100,4 +159,5 @@ function refreshAll() {
 document.getElementById('refresh-btn').addEventListener('click', refreshAll);
 
 refreshAll();
+renderProjects();
 setInterval(refreshAll, 30000); // keep the view live while the app sits open
