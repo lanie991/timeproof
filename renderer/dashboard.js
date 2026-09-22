@@ -91,6 +91,13 @@ document.getElementById('screenshots-toggle').addEventListener('change', async (
   renderPrivacy();
 });
 
-renderTimesheet();
-renderPrivacy();
-renderIntegrity();
+function refreshAll() {
+  renderTimesheet();
+  renderPrivacy();
+  renderIntegrity();
+}
+
+document.getElementById('refresh-btn').addEventListener('click', refreshAll);
+
+refreshAll();
+setInterval(refreshAll, 30000); // keep the view live while the app sits open
